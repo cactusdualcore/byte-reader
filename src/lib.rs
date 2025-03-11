@@ -119,6 +119,9 @@ impl_read_n!(read_u128_le, read_u128_be, next_u18_le, next_u128_be, u128);
 impl_read_n!(read_i128_le, read_i128_be, next_i128_le, next_i128_be, i128);
 
 impl<'a> Cursor<'a> {
+    /// Advances until the next byte is not ASCII whitespace.
+    /// 
+    /// Whitespace being defined by [char::is_ascii_whitespace].
     #[inline]
     pub fn skip_ascii_whitespace(&mut self) {
         loop {
@@ -149,9 +152,9 @@ impl<'a> Cursor<'a> {
         }
     }
 
-    /// Returns the number of bytes advanced.
+    /// Returns the number of bytes consumed.
     #[inline]
-    pub fn index(&self) -> usize {
+    pub fn bytes_consumed(&self) -> usize {
         self.cursor as usize - self.start as usize
     }
 

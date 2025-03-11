@@ -1,13 +1,53 @@
 #![cfg(test)]
 
-use crate::bytes::Cursor;
+use crate::Cursor;
 
 #[test]
-fn next() {
-    let mut cursor = Cursor::new("AB".as_bytes());
-    assert_eq!(cursor.next(), Some(b'A'));
-    assert_eq!(cursor.next(), Some(b'B'));
-    assert_eq!(cursor.next(), None);
+fn skip_ascii_whitespace() {
+    let mut cursor = Cursor::new(b"a\n\t\x0C\r");
+    
+    cursor.skip_ascii_whitespace();
+    assert_eq!(
+        cursor.peek(),
+        Some(b'a')
+    );
+    
+    cursor.advance();
+    cursor.skip_ascii_whitespace();
+    
+    assert_eq!(
+        cursor.peek(),
+        None
+    )
+}
+
+#[test]
+fn cursor() {
+    let slice = b"ab";
+    
+    let mut cursor = Cursor::new(slice);
+    
+    assert_eq!(
+        cursor.cursor(),
+        &slice[0] as _
+    );
+    
+    cursor.advance();
+
+    assert_eq!(
+        cursor.cursor(),
+        &slice[1] as _
+    );
+}
+
+#[test]
+fn bytes_consumed() {
+    let mut cursor = Cursor::new(b"ab");
+    assert_eq!(cursor.bytes_consumed(), 0);
+    cursor.advance();
+    assert_eq!(cursor.bytes_consumed(), 1);
+    cursor.advance();
+    assert_eq!(cursor.bytes_consumed(), 2);
 }
 
 #[test]
@@ -25,6 +65,14 @@ fn next_lfn() {
 }
 
 #[test]
+fn next() {
+    let mut cursor = Cursor::new("AB".as_bytes());
+    assert_eq!(cursor.next(), Some(b'A'));
+    assert_eq!(cursor.next(), Some(b'B'));
+    assert_eq!(cursor.next(), None);
+}
+
+#[test]
 fn peek() {
     let mut cursor = Cursor::new("AB".as_bytes());
     assert_eq!(cursor.peek(), Some(b'A'));
@@ -38,36 +86,31 @@ fn peek() {
 }
 
 #[test]
+fn peek_n() {
+    let cursor = Cursor::new("AB".as_bytes());
+    
+    assert_eq!(cursor.peek_n(0), Some(b'A'));
+    assert_eq!(cursor.peek_n(1), Some(b'B'));
+    assert_eq!(cursor.peek_n(2), None);
+}
+
+#[test]
+fn bytes_remaining() {
+    let mut cursor = Cursor::new("AB".as_bytes());
+    assert_eq!(cursor.bytes_remaining(), 2);
+    cursor.advance();
+    assert_eq!(cursor.bytes_remaining(), 1);
+    cursor.advance();
+    assert_eq!(cursor.bytes_remaining(), 0);
+}
+
+#[test]
 fn has_next() {
     let mut cursor = Cursor::new("A".as_bytes());
     assert_eq!(cursor.has_next(), true);
 
     unsafe { cursor.advance_unchecked() }
     assert_eq!(cursor.has_next(), false);
-}
-
-#[test]
-fn can_rewind() {
-    let mut cursor = Cursor::new("A".as_bytes());
-    assert_eq!(cursor.can_rewind(), false);
-
-    assert_eq!(cursor.next(), Some(b'A'));
-    assert_eq!(cursor.can_rewind(), true);
-}
-
-#[test]
-fn rewind_lfn() {
-    let mut cursor = Cursor::new("AB\r".as_bytes());
-    cursor.advance(); // A
-
-    cursor.rewind();
-    assert_eq!(cursor.next(), Some(b'A'));
-
-    let _ = cursor.next_lfn(); // B
-    let _ = cursor.next_lfn(); // LF
-    
-    cursor.rewind_lfn();
-    assert_eq!(cursor.next_lfn(), Some(b'\n'));
 }
 
 #[test]
