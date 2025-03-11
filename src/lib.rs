@@ -1,4 +1,7 @@
 #![no_std]
+#![deny(unsafe_op_in_unsafe_fn)]
+
+//! A crate providing utilities for slice iteration.
 
 mod tests;
 
@@ -129,11 +132,13 @@ impl<'a> Cursor<'a> {
         }
     }
 
+    /// Returns the pointer to the next byte.
     #[inline]
     pub const fn cursor(&self) -> *const u8 {
         self.cursor
     }
 
+    /// Constructs a new [Cursor] from a slice.
     #[inline]
     pub const fn new(slice: &[u8]) -> Self {
         Self {
@@ -144,6 +149,7 @@ impl<'a> Cursor<'a> {
         }
     }
 
+    /// Returns the number of bytes advanced.
     #[inline]
     pub fn index(&self) -> usize {
         self.cursor as usize - self.start as usize
@@ -170,7 +176,7 @@ impl<'a> Cursor<'a> {
         }
     }
 
-    /// Gets the next byte. Does not normalize line terminators.
+    /// Gets the next byte. Does not normalize line terminators. Advances.
     #[inline]
     pub fn next(&mut self) -> Option<u8> {
         if self.has_next() {
@@ -189,9 +195,11 @@ impl<'a> Cursor<'a> {
     /// The caller must ensure that the cursor has a next byte.
     #[inline]
     pub unsafe fn next_unchecked(&mut self) -> u8 {
-        let byte = self.peek_unchecked();
-        self.advance_unchecked();
-        byte
+        unsafe {
+            let byte = self.peek_unchecked();
+            self.advance_unchecked();
+            byte
+        }
     }
 
     /// Peeks into the next byte. Does not advance the iterator.
@@ -216,6 +224,7 @@ impl<'a> Cursor<'a> {
         }
     }
 
+    /// Returns the number of bytes remaining.
     #[inline]
     pub fn bytes_remaining(&self) -> usize {
         (self.end as usize).saturating_sub(self.cursor as usize)
@@ -234,7 +243,7 @@ impl<'a> Cursor<'a> {
     /// The caller must ensure that the cursor has a next byte.
     #[inline]
     pub unsafe fn peek_unchecked(&self) -> u8 {
-        *self.cursor
+        unsafe { *self.cursor }
     }
 
     /// Advances one char, saturates at the upper boundary.
@@ -257,6 +266,7 @@ impl<'a> Cursor<'a> {
         }
     }
 
+    /// Advances n bytes.
     #[inline]
     pub unsafe fn advance_n_unchecked(&mut self, n: usize) {
         unsafe {
@@ -264,9 +274,12 @@ impl<'a> Cursor<'a> {
         }
     }
 
+    /// Advances a UTF-8 character without checking for bounds.
     #[inline]
     pub unsafe fn advance_char_unchecked(&mut self) {
-        self.cursor = self.cursor.add(UTF8_CHAR_WIDTH[self.peek_unchecked() as usize] as usize);
+        unsafe {
+            self.cursor = self.cursor.add(UTF8_CHAR_WIDTH[self.peek_unchecked() as usize] as usize);
+        }
     }
 
     /// Advances the cursor by one char encoded as UTF-8.
@@ -313,11 +326,6 @@ impl<'a> Cursor<'a> {
             _ => unsafe { unreachable_unchecked() }
         }
     }
-
-    // #[inline]
-    // pub const fn offset(&self) -> usize {
-    //     unsafe { self.cursor.sub_ptr(self.first) }
-    // }
 }
 
 const UTF8_CHAR_WIDTH: &[u8; 256] = &[
