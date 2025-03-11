@@ -118,6 +118,49 @@ impl_read_n!(read_i64_le, read_i64_be, next_i64_le, next_i64_be, i64);
 impl_read_n!(read_u128_le, read_u128_be, next_u18_le, next_u128_be, u128);
 impl_read_n!(read_i128_le, read_i128_be, next_i128_le, next_i128_be, i128);
 
+// F32 and F64 impls
+impl<'a> Cursor<'a> {
+    #[inline]
+    pub fn read_f32_le(&self) -> Option<f32> {
+        self.read_u32_le().map(f32::from_bits)
+    }
+    
+    #[inline]
+    pub fn read_f32_be(&self) -> Option<f32> {
+        self.read_u32_be().map(f32::from_bits)
+    }
+    
+    #[inline]
+    pub fn next_f32_le(&mut self) -> Option<f32> {
+        self.next_u32_le().map(f32::from_bits)
+    }
+    
+    #[inline]
+    pub fn next_f32_be(&mut self) -> Option<f32> {
+        self.next_u32_be().map(f32::from_bits)
+    }
+    
+    #[inline]
+    pub fn read_f64_le(&self) -> Option<f64> {
+        self.read_u64_le().map(f64::from_bits)
+    }
+    
+    #[inline]
+    pub fn read_f64_be(&self) -> Option<f64> {
+        self.read_u64_be().map(f64::from_bits)
+    }
+    
+    #[inline]
+    pub fn next_f64_le(&mut self) -> Option<f64> {
+        self.next_u64_le().map(f64::from_bits)
+    }
+    
+    #[inline]
+    pub fn next_f64_be(&mut self) -> Option<f64> {
+        self.next_u64_be().map(f64::from_bits)
+    }
+}
+
 impl<'a> Cursor<'a> {
     /// Advances until the next byte is not ASCII whitespace.
     /// 
