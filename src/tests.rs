@@ -3,6 +3,17 @@
 use crate::Cursor;
 
 #[test]
+fn get_lines_and_columns() {
+    assert_eq!(
+        crate::get_lines_and_columns(
+            "Is this the real life?\nIs this just fantasy\r\nSome other line",
+            50
+        ),
+        (2, 5)
+    )
+}
+
+#[test]
 fn skip_ascii_whitespace() {
     let mut cursor = Cursor::new(b"a\n\t\x0C\r");
     

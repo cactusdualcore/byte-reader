@@ -10,19 +10,18 @@ mod position;
 pub use cursor::*;
 pub use position::*;
 
-/// Calculates line:col from a source string slice and an offset.
+/// Calculates line:col from a source string slice and an offset. CRLF sequences are treated as
+/// one line break.
 /// 
 /// May be useful for error messages.
-pub fn get_lines_and_columns(source: &str, byte_offset: usize) -> (usize, usize) {
+/// 
+/// **Lines and columns are 0-indexed**, meaning the first line (or the first column) is 0.
+pub fn get_lines_and_columns(source: &str, mut byte_offset: usize) -> (usize, usize) {
     let mut lines = 0;
     let mut columns = 0;
-    let mut i = 0;
-
     let mut cursor = Cursor::new(source.as_bytes());
 
-    loop {
-        if byte_offset <= i { break }
-
+    while byte_offset > 0 {
         match cursor.peek() {
             Some(b'\r') => {
                 lines += 1;
@@ -32,7 +31,7 @@ pub fn get_lines_and_columns(source: &str, byte_offset: usize) -> (usize, usize)
 
                 if let Some(b'\n') = cursor.peek() {
                     unsafe { cursor.advance_unchecked() }
-                    i += 1;
+                    byte_offset -= 1;
                 }
             }
             Some(b'\n') => {
@@ -48,7 +47,7 @@ pub fn get_lines_and_columns(source: &str, byte_offset: usize) -> (usize, usize)
             None => break
         }
 
-        i += 1;
+        byte_offset -= 1;
     }
 
     (lines, columns)
