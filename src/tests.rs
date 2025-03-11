@@ -22,21 +22,19 @@ fn skip_ascii_whitespace() {
 }
 
 #[test]
-fn cursor() {
-    let slice = b"ab";
-    
+fn position() {
+    let slice = b"abc";
     let mut cursor = Cursor::new(slice);
     
-    assert_eq!(
-        cursor.cursor(),
-        &slice[0] as _
-    );
+    cursor.advance();
+    
+    let position = cursor.position();
     
     cursor.advance();
 
     assert_eq!(
-        cursor.cursor(),
-        &slice[1] as _
+        &slice[1..2],
+        position.slice_to(cursor.position())
     );
 }
 
