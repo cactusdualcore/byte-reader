@@ -44,6 +44,7 @@ macro_rules! impl_read_n {
     };
 }
 
+#[derive(Clone, PartialEq, Eq)]
 /// An iterator over a slice.
 pub struct Cursor<'a> {
     /// The pointer to the first element.
