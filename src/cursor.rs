@@ -256,14 +256,17 @@ impl<'a> Cursor<'a> {
     /// Peeks into the nth byte, first byte is n=0. Does not advance.
     #[inline]
     pub fn peek_n(&self, n: usize) -> Option<u8> {
-        let desired_byte_ptr = unsafe { self.cursor.add(n) };
-
-        if desired_byte_ptr < self.end {
-            Some(unsafe { *desired_byte_ptr })
-        } else {
-            None
-        }
-    }
+        // SAFETY: `self.cursor` is strictly less than `self.end`
+        let delta = unsafe { self.end.offset_from(self.cursor) } as usize;
+        (n < delta).then(|| {
+          // SAFETY: `self.cursor` offset by `n` is not out-of-bounds,
+          // as checked above.
+          let ptr = unsafe { self.cursor.add(n) };
+          // SAFETY: `ptr` is a valid pointer to a `u8` and lies within
+          // the bounds of the owned allocation.
+          unsafe { *ptr }
+        })
+      }
 
     /// Returns the number of bytes remaining.
     #[inline]
