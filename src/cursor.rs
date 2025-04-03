@@ -221,7 +221,8 @@ impl<'a> Cursor<'a> {
 
     /// Gets the next byte. Does not normalize line terminators. Advances.
     #[inline]
-    pub fn next(&mut self) -> Option<u8> {
+    #[doc(alias = "next")]
+    pub fn next_byte(&mut self) -> Option<u8> {
         if self.has_next() {
             let byte = unsafe { self.peek_unchecked() };
             unsafe { self.advance_unchecked() };
@@ -383,6 +384,14 @@ impl<'a> Cursor<'a> {
             }
             _ => unsafe { unreachable_unchecked() },
         }
+    }
+}
+
+impl Iterator for Cursor<'_> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next_byte()
     }
 }
 
