@@ -1,6 +1,6 @@
+use crate::Position;
 use core::hint::unreachable_unchecked;
 use core::marker::PhantomData;
-use crate::Position;
 
 macro_rules! impl_read_n {
     ($le:ident,$be:ident,$nle:ident,$nbe:ident,$t:tt) => {
@@ -10,7 +10,9 @@ macro_rules! impl_read_n {
                 if self.bytes_remaining() < size_of::<$t>() {
                     None
                 } else {
-                    Some($t::from_le(unsafe { (self.cursor as *const $t).read_unaligned() }))
+                    Some($t::from_le(unsafe {
+                        (self.cursor as *const $t).read_unaligned()
+                    }))
                 }
             }
 
@@ -19,16 +21,16 @@ macro_rules! impl_read_n {
                 if self.bytes_remaining() < size_of::<$t>() {
                     None
                 } else {
-                    Some($t::from_be(unsafe { (self.cursor as *const $t).read_unaligned() }))
+                    Some($t::from_be(unsafe {
+                        (self.cursor as *const $t).read_unaligned()
+                    }))
                 }
             }
 
             #[inline]
             pub fn $nle(&mut self) -> Option<$t> {
-                self.$le().inspect(|_| {
-                    unsafe {
-                        self.advance_n_unchecked(size_of::<$t>());
-                    }
+                self.$le().inspect(|_| unsafe {
+                    self.advance_n_unchecked(size_of::<$t>());
                 })
             }
 
@@ -37,7 +39,9 @@ macro_rules! impl_read_n {
                 if self.bytes_remaining() < size_of::<$t>() {
                     None
                 } else {
-                    Some($t::from_be(unsafe { (self.cursor as *const $t).read_unaligned() }))
+                    Some($t::from_be(unsafe {
+                        (self.cursor as *const $t).read_unaligned()
+                    }))
                 }
             }
         }
@@ -166,9 +170,7 @@ impl<'a> Cursor<'a> {
             match self.peek() {
                 None => break,
                 Some(x) if !x.is_ascii_whitespace() => break,
-                Some(_) => {
-                    unsafe { self.advance_unchecked() }
-                }
+                Some(_) => unsafe { self.advance_unchecked() },
             }
         }
     }
@@ -259,14 +261,14 @@ impl<'a> Cursor<'a> {
         // SAFETY: `self.cursor` is strictly less than `self.end`
         let delta = unsafe { self.end.offset_from(self.cursor) } as usize;
         (n < delta).then(|| {
-          // SAFETY: `self.cursor` offset by `n` is not out-of-bounds,
-          // as checked above.
-          let ptr = unsafe { self.cursor.add(n) };
-          // SAFETY: `ptr` is a valid pointer to a `u8` and lies within
-          // the bounds of the owned allocation.
-          unsafe { *ptr }
+            // SAFETY: `self.cursor` offset by `n` is not out-of-bounds,
+            // as checked above.
+            let ptr = unsafe { self.cursor.add(n) };
+            // SAFETY: `ptr` is a valid pointer to a `u8` and lies within
+            // the bounds of the owned allocation.
+            unsafe { *ptr }
         })
-      }
+    }
 
     /// Returns the number of bytes remaining.
     #[inline]
@@ -294,7 +296,9 @@ impl<'a> Cursor<'a> {
     #[inline]
     pub fn advance(&mut self) {
         if self.has_next() {
-            unsafe { self.advance_unchecked(); }
+            unsafe {
+                self.advance_unchecked();
+            }
         }
     }
 
@@ -305,9 +309,7 @@ impl<'a> Cursor<'a> {
     /// The caller must ensure that the cursor is not at the end.
     #[inline]
     pub unsafe fn advance_unchecked(&mut self) {
-        unsafe {
-            self.cursor = self.cursor.add(1)
-        }
+        unsafe { self.cursor = self.cursor.add(1) }
     }
 
     /// Advances n bytes.
@@ -322,7 +324,9 @@ impl<'a> Cursor<'a> {
     #[inline]
     pub unsafe fn advance_char_unchecked(&mut self) {
         unsafe {
-            self.cursor = self.cursor.add(UTF8_CHAR_WIDTH[self.peek_unchecked() as usize] as usize);
+            self.cursor = self
+                .cursor
+                .add(UTF8_CHAR_WIDTH[self.peek_unchecked() as usize] as usize);
         }
     }
 
@@ -339,7 +343,7 @@ impl<'a> Cursor<'a> {
                 match self.next_lfn() {
                     None => return Err($e),
                     Some(x) if x & 0b1100_0000 != 0b1000_0000 => return Err($i),
-                    _ => {},
+                    _ => {}
                 }
             };
         }
@@ -347,11 +351,11 @@ impl<'a> Cursor<'a> {
         match UTF8_CHAR_WIDTH[first_byte as usize] {
             0 => Err(Error::EncounteredContinuationByte),
             1 => {
-                if first_byte == b'\r' && self.peek() == Some(b'\n')  {
+                if first_byte == b'\r' && self.peek() == Some(b'\n') {
                     unsafe { self.advance_unchecked() }
                 }
                 Ok(())
-            },
+            }
             2 => {
                 next!(Error::Missing2ndOf2, Error::Invalid2ndOf2);
                 Ok(())
@@ -367,7 +371,7 @@ impl<'a> Cursor<'a> {
                 next!(Error::Missing4thOf4, Error::Invalid4thOf4);
                 Ok(())
             }
-            _ => unsafe { unreachable_unchecked() }
+            _ => unsafe { unreachable_unchecked() },
         }
     }
 }
