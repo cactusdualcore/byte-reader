@@ -118,7 +118,7 @@ impl_read_n!(read_u128_le, read_u128_be, next_u18_le, next_u128_be, u128);
 impl_read_n!(read_i128_le, read_i128_be, next_i128_le, next_i128_be, i128);
 
 // F32 and F64 impls
-impl<'a> Cursor<'a> {
+impl Cursor<'_> {
     #[inline]
     pub fn read_f32_le(&self) -> Option<f32> {
         self.read_u32_le().map(f32::from_bits)
@@ -313,6 +313,11 @@ impl<'a> Cursor<'a> {
     }
 
     /// Advances n bytes.
+    ///
+    /// # Safety
+    ///
+    /// Advancing the read cursor `n` must not be out-of-bounds for the
+    /// underlying allocation.
     #[inline]
     pub unsafe fn advance_n_unchecked(&mut self, n: usize) {
         unsafe {
@@ -321,6 +326,11 @@ impl<'a> Cursor<'a> {
     }
 
     /// Advances a UTF-8 character without checking for bounds.
+    ///
+    /// # Safety
+    ///
+    /// Advancing the read cursor `n` must not be out-of-bounds for the
+    /// underlying allocation.
     #[inline]
     pub unsafe fn advance_char_unchecked(&mut self) {
         unsafe {
